@@ -6,6 +6,7 @@ class Intcode:
         self.init_code = list(map(int, data.split(',')))
         self.code = []
         self.pos = 0
+        self.relative_base = 0
         self.input = []
         self.output = []
         self.wait = False
@@ -43,10 +44,16 @@ class Intcode:
     def reset(self):
         self.code = copy.deepcopy(self.init_code)
         self.pos = 0
+        self.relative_base = 0
         self.input = []
         self.output = []
         self.wait = False
         self.current_code = None
+
+    def extend_space(self, required_position):
+        l = len(self.code)
+        if required_position >= l:
+            self.code.extend([0] * (1 + required_position - l))
 
     def interpret_param(self, param, mode):
         mode = mode[-param] if len(mode) >= param else '0'
@@ -54,11 +61,15 @@ class Intcode:
             return self.code[self.pos + param]
         if mode == '1':
             return self.pos + param
+        if mode == '2':
+            return self.relative_base + param
 
     def _do_1(self, mode):
         par1 = self.interpret_param(1, mode)
         par2 = self.interpret_param(2, mode)
         par3 = self.interpret_param(3, mode)
+
+        self.extend_space(par3)
 
         self.code[par3] = self.code[par1] + self.code[par2]
         assert self.code[par3] is not None, 'code None'
@@ -69,6 +80,7 @@ class Intcode:
         par2 = self.interpret_param(2, mode)
         par3 = self.interpret_param(3, mode)
 
+        self.extend_space(par3)
         self.code[par3] = self.code[par1] * self.code[par2]
         assert self.code[par3] is not None, 'code None'
         self.pos += 4
@@ -78,6 +90,8 @@ class Intcode:
         input_value = self.pop_input()
         if input_value is None:
             return
+
+        self.extend_space(par1)
         self.code[par1] = input_value
         assert self.code[par1] is not None, 'code None'
         self.pos += 2
@@ -111,6 +125,8 @@ class Intcode:
         par2 = self.interpret_param(2, mode)
         par3 = self.interpret_param(3, mode)
 
+        self.extend_space(par3)
+
         if self.code[par1] < self.code[par2]:
             self.code[par3] = 1
         else:
@@ -123,11 +139,19 @@ class Intcode:
         par2 = self.interpret_param(2, mode)
         par3 = self.interpret_param(3, mode)
 
+        self.extend_space(par3)
+
         if self.code[par1] == self.code[par2]:
             self.code[par3] = 1
         else:
             self.code[par3] = 0
         self.pos += 4
+
+    def _do_9(self, mode):
+        par1 = self.interpret_param(1, mode)
+        self.relative_base += self.code[par1]
+
+        self.pos += 2
 
     def _do_99(self, mode):
         self.wait = True
