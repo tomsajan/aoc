@@ -13,8 +13,6 @@ from collections import namedtuple
 Tah = namedtuple('Tah', ['red', 'green', 'blue'], defaults=[0,0,0])
 
 maximal_tah = Tah(red=12, green=13, blue=14)
-test_tah = Tah(red=11, green=50, blue=14)
-print(test_tah <= maximal_tah)
 
 # print(maximal_tah <= test_tah)
 # t = Tah(1,blue=4)
@@ -45,7 +43,8 @@ def parse_game(line):
     
     return game, gamedata
 
-
+def power_of_game(gamedata):
+    return max(tah.red for tah in gamedata) * max(tah.blue for tah in gamedata) * max(tah.green for tah in gamedata) 
 
 if __name__ == '__main__':
 
@@ -54,7 +53,7 @@ if __name__ == '__main__':
         game, gamedata = parse_game(line)
         games[game] = gamedata
     
-    soucet = sum(  game for game, gamedata in games.items() if all(tah.red <= maximal_tah.red and tah.blue <= maximal_tah.blue and tah.green <= maximal_tah.green for tah in gamedata)   )
+    soucet = sum(  power_of_game(gamedata) for game, gamedata in games.items()    )
     print(soucet)
     submit(soucet)
         
