@@ -31,4 +31,4 @@ if __name__ == '__main__':
 
     result = sum(report_modifier(report) for report in data.splitlines())
     print(result)
-    msubmit(result)
+    submit(result)
